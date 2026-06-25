@@ -21,7 +21,10 @@ mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN || ''
 export default function Globe({ pings = [], onMapClick }: GlobeProps) {
   const mapContainer = useRef<HTMLDivElement | null>(null)
   const mapRef = useRef<mapboxgl.Map | null>(null)
-  const markersRef = useRef<mapboxgl.Marker[]>([])
+  const markerMapRef = useRef<Map<string | number, mapboxgl.Marker>>(new Map())
+  const onMapClickRef = useRef(onMapClick)
+
+  onMapClickRef.current = onMapClick
 
   useEffect(() => {
     if (!mapContainer.current || mapRef.current) return
@@ -47,29 +50,44 @@ export default function Globe({ pings = [], onMapClick }: GlobeProps) {
       })
     })
 
-    if (onMapClick) {
-      map.on('click', (event) => {
-        const { lng, lat } = event.lngLat
-        onMapClick(lat, lng)
-      })
-    }
+    map.on('click', (event) => {
+      const latestHandler = onMapClickRef.current
+      if (!latestHandler) return
+      const { lng, lat } = event.lngLat
+      latestHandler(lat, lng)
+    })
+
+    const markerMap = markerMapRef.current
 
     return () => {
-      markersRef.current.forEach((marker) => marker.remove())
-      markersRef.current = []
+      markerMap.forEach((marker) => marker.remove())
+      markerMap.clear()
       map.remove()
       mapRef.current = null
     }
-  }, [onMapClick])
+  }, [])
 
   useEffect(() => {
     const map = mapRef.current
     if (!map) return
 
-    markersRef.current.forEach((marker) => marker.remove())
-    markersRef.current = []
+    const desiredIds = new Set<string | number>()
+    const keyedPings = pings.map((ping, index): [string | number, Ping] => {
+      const key = ping.id ?? `index-${index}`
+      desiredIds.add(key)
+      return [key, ping]
+    })
 
-    pings.forEach((ping) => {
+    markerMapRef.current.forEach((marker, id) => {
+      if (!desiredIds.has(id)) {
+        marker.remove()
+        markerMapRef.current.delete(id)
+      }
+    })
+
+    keyedPings.forEach(([id, ping]) => {
+      if (markerMapRef.current.has(id)) return
+
       const el = document.createElement('div')
       el.className = styles.pingMarker
       el.setAttribute('data-testid', 'ping-marker')
@@ -78,7 +96,7 @@ export default function Globe({ pings = [], onMapClick }: GlobeProps) {
         .setLngLat([ping.lng, ping.lat])
         .addTo(map)
 
-      markersRef.current.push(marker)
+      markerMapRef.current.set(id, marker)
     })
   }, [pings])
 
