@@ -1,7 +1,8 @@
+import { describe, it, expect } from '@jest/globals'
 import { createClient } from './client'
 
-describe('createClient', () => {
-  it('should return a Supabase client when env vars are available', () => {
+describe('Supabase browser client', () => {
+  it('creates a client instance', () => {
     const client = createClient()
     expect(client).toBeDefined()
     expect(client.auth).toBeDefined()

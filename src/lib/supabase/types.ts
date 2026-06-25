@@ -11,12 +11,19 @@ export interface Database {
     Tables: {
       profiles: {
         Row: Profile
-        Insert: Omit<Profile, 'id'> & { id?: string }
+        Insert: Omit<Profile, 'id' | 'created_at' | 'updated_at'> & {
+          id?: string
+          created_at?: string
+          updated_at?: string
+        }
         Update: Partial<Profile>
       }
       check_ins: {
         Row: CheckIn
-        Insert: Omit<CheckIn, 'id' | 'created_at'> & { id?: string; created_at?: string }
+        Insert: Omit<CheckIn, 'id' | 'created_at'> & {
+          id?: string
+          created_at?: string
+        }
         Update: Partial<CheckIn>
       }
     }
@@ -25,19 +32,20 @@ export interface Database {
 
 export interface Profile {
   id: string
-  email: string
+  username: string
   display_name: string | null
+  bio: string | null
   avatar_url: string | null
   created_at: string
+  updated_at: string
 }
 
 export interface CheckIn {
   id: string
   user_id: string
-  place_id: string
-  place_name: string
-  latitude: number
-  longitude: number
+  lat: number
+  lng: number
+  place_name: string | null
   note: string | null
   created_at: string
 }
