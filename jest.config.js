@@ -12,6 +12,7 @@ const customJestConfig = {
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
     '^@supabase/ssr$': '<rootDir>/__mocks__/@supabase/ssr.ts',
+    '^mapbox-gl$': '<rootDir>/__mocks__/mapbox-gl.ts',
   },
   testPathIgnorePatterns: ['<rootDir>/.next/', '<rootDir>/node_modules/'],
   testEnvironmentOptions: {
