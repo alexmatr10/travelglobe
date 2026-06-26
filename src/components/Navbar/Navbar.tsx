@@ -27,6 +27,12 @@ export default function Navbar() {
               >
                 Profile
               </Link>
+              <Link
+                href="/settings"
+                className="text-sm font-medium text-slate-300 transition-colors hover:text-slate-100"
+              >
+                Settings
+              </Link>
               <button
                 onClick={async () => {
                   await signOut()
