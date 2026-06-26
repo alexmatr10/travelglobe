@@ -117,6 +117,7 @@ export default function AuthForm() {
         <button
           type="submit"
           disabled={loading}
+          aria-busy={loading}
           className="mt-2 rounded-lg bg-cyan-500 px-4 py-3 font-semibold text-slate-900 transition hover:bg-cyan-400 disabled:cursor-not-allowed disabled:opacity-60"
         >
           {loading ? 'Please wait...' : isSignUp ? 'Sign Up' : 'Sign In'}

@@ -28,9 +28,19 @@ export function CheckInModal({ lat, lng, onSubmit, onClose }: CheckInModalProps)
   }
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-4">
+    <div
+      className="fixed inset-0 z-[60] flex items-start justify-center bg-black/60 p-4 pt-20 sm:items-center sm:pt-0"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="checkin-title"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose()
+      }}
+    >
       <div className="w-full max-w-md rounded-2xl bg-slate-900 p-6 shadow-xl">
-        <h3 className="mb-1 text-xl font-bold text-white">Drop a ping</h3>
+        <h3 id="checkin-title" className="mb-1 text-xl font-bold text-white">
+          Drop a ping
+        </h3>
         <p className="mb-4 text-sm text-slate-400">
           {lat.toFixed(4)}, {lng.toFixed(4)}
         </p>
@@ -42,6 +52,7 @@ export function CheckInModal({ lat, lng, onSubmit, onClose }: CheckInModalProps)
             onChange={(e) => setPlaceName(e.target.value)}
             required
             disabled={saving}
+            aria-label="Place name"
             className="w-full rounded-lg bg-slate-800 px-4 py-2 text-white placeholder:text-slate-500 outline-none focus:ring-2 focus:ring-cyan-400 disabled:opacity-60"
           />
           <textarea
@@ -50,9 +61,10 @@ export function CheckInModal({ lat, lng, onSubmit, onClose }: CheckInModalProps)
             onChange={(e) => setNote(e.target.value)}
             rows={3}
             disabled={saving}
+            aria-label="Note"
             className="w-full rounded-lg bg-slate-800 px-4 py-2 text-white placeholder:text-slate-500 outline-none focus:ring-2 focus:ring-cyan-400 disabled:opacity-60"
           />
-          <div className="flex gap-2 pt-2">
+          <div className="flex flex-col gap-2 pt-2 sm:flex-row">
             <button
               type="button"
               onClick={onClose}

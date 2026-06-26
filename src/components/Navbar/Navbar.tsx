@@ -29,7 +29,7 @@ export default function Navbar() {
               </Link>
               <Link
                 href="/settings"
-                className="text-sm font-medium text-slate-300 transition-colors hover:text-slate-100"
+                className="hidden text-sm font-medium text-slate-300 transition-colors hover:text-slate-100 sm:block"
               >
                 Settings
               </Link>
