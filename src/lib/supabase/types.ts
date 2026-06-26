@@ -6,7 +6,7 @@ export type Json =
   | { [key: string]: Json | undefined }
   | Json[]
 
-export interface Database {
+export type Database = {
   public: {
     Tables: {
       profiles: {
@@ -17,6 +17,15 @@ export interface Database {
           updated_at?: string
         }
         Update: Partial<Profile>
+        Relationships: [
+          {
+            foreignKeyName: 'profiles_id_fkey'
+            columns: ['id']
+            isOneToOne: true
+            referencedRelation: 'users'
+            referencedColumns: ['id']
+          }
+        ]
       }
       check_ins: {
         Row: CheckIn
@@ -25,8 +34,21 @@ export interface Database {
           created_at?: string
         }
         Update: Partial<CheckIn>
+        Relationships: [
+          {
+            foreignKeyName: 'check_ins_user_id_fkey'
+            columns: ['user_id']
+            isOneToOne: false
+            referencedRelation: 'profiles'
+            referencedColumns: ['id']
+          }
+        ]
       }
     }
+    Views: Record<string, never>
+    Functions: Record<string, never>
+    Enums: Record<string, never>
+    CompositeTypes: Record<string, never>
   }
 }
 
@@ -52,3 +74,6 @@ export interface CheckIn {
 
 export type Tables<T extends keyof Database['public']['Tables']> =
   Database['public']['Tables'][T]['Row']
+
+export type Enums<T extends keyof Database['public']['Enums']> =
+  Database['public']['Enums'][T]

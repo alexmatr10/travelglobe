@@ -1,5 +1,5 @@
 import Navbar from '@/components/Navbar/Navbar'
-import Globe from '@/components/Globe/Globe'
+import { HomeClient } from './HomeClient'
 import { fetchCheckIns } from '@/lib/checkIns'
 
 export default async function Home() {
@@ -9,7 +9,7 @@ export default async function Home() {
     <>
       <Navbar />
       <main className="h-screen w-screen pt-16">
-        <Globe pings={pings} />
+        <HomeClient initialPings={pings} />
       </main>
     </>
   )

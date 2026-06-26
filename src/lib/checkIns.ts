@@ -1,5 +1,4 @@
 import { createClient } from '@/lib/supabase/server'
-import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Tables } from '@/lib/supabase/types'
 import type { Ping } from '@/types/ping'
 
@@ -10,10 +9,8 @@ interface CheckInWithProfile extends CheckInRow {
   profiles?: ProfileRow | ProfileRow[] | null
 }
 
-export async function fetchCheckIns(
-  client?: SupabaseClient
-): Promise<Ping[]> {
-  const supabase = client ?? (await createClient())
+export async function fetchCheckIns(): Promise<Ping[]> {
+  const supabase = await createClient()
 
   const { data, error } = (await supabase
     .from('check_ins')
