@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useAuth } from '@/context/AuthContext'
 import { createClient } from '@/lib/supabase/client'
 import Globe from '@/components/Globe/Globe'
@@ -15,6 +15,28 @@ export function HomeClient({ initialPings }: HomeClientProps) {
   const { user } = useAuth()
   const [pings, setPings] = useState<Ping[]>(initialPings)
   const [draft, setDraft] = useState<{ lat: number; lng: number } | null>(null)
+
+  useEffect(() => {
+    const supabase = createClient()
+    const channel = supabase
+      .channel('public:check_ins')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'check_ins' },
+        (payload) => {
+          const checkIn = payload.new as Ping
+          setPings((prev) => {
+            if (prev.some((p) => p.id === checkIn.id)) return prev
+            return [checkIn, ...prev]
+          })
+        }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [])
 
   const handleMapClick = (lat: number, lng: number) => {
     if (!user) return
