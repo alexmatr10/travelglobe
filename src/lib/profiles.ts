@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import type { Tables } from '@/lib/supabase/types'
 
-export type Profile = Tables<'profiles'>
+export type Profile = Tables<'travelers'>
 export type CheckIn = Tables<'check_ins'>
 
 export async function getProfileWithCheckIns(userId: string): Promise<{
@@ -11,7 +11,7 @@ export async function getProfileWithCheckIns(userId: string): Promise<{
   const supabase = await createClient()
 
   const { data: profile, error: profileError } = (await supabase
-    .from('profiles')
+    .from('travelers')
     .select('*')
     .eq('id', userId)
     .single()) as { data: Profile | null; error: { message: string } | null }

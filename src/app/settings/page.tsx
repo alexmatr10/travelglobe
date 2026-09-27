@@ -11,7 +11,7 @@ export default async function SettingsPage() {
   if (!user) redirect('/auth')
 
   const { data: profile } = (await supabase
-    .from('profiles')
+    .from('travelers')
     .select('*')
     .eq('id', user.id)
     .single()) as { data: import('@/lib/supabase/types').Profile | null; error: unknown }

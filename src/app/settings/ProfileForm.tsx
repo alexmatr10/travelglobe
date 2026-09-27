@@ -22,7 +22,7 @@ export function ProfileForm({
     setSaving(true)
     const supabase = createClient()
     const { error } = await supabase
-      .from('profiles')
+      .from('travelers')
       .update({ display_name: displayName, bio })
       .eq('id', initialProfile.id)
     setSaving(false)

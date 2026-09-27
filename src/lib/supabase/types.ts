@@ -9,7 +9,7 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      profiles: {
+      travelers: {
         Row: Profile
         Insert: Omit<Profile, 'id' | 'created_at' | 'updated_at'> & {
           id?: string
@@ -19,7 +19,7 @@ export type Database = {
         Update: Partial<Profile>
         Relationships: [
           {
-            foreignKeyName: 'profiles_id_fkey'
+            foreignKeyName: 'travelers_id_fkey'
             columns: ['id']
             isOneToOne: true
             referencedRelation: 'users'
@@ -39,7 +39,7 @@ export type Database = {
             foreignKeyName: 'check_ins_user_id_fkey'
             columns: ['user_id']
             isOneToOne: false
-            referencedRelation: 'profiles'
+            referencedRelation: 'travelers'
             referencedColumns: ['id']
           }
         ]

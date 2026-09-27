@@ -3,10 +3,10 @@ import type { Tables } from '@/lib/supabase/types'
 import type { Ping } from '@/types/ping'
 
 type CheckInRow = Tables<'check_ins'>
-type ProfileRow = Tables<'profiles'>
+type TravelerRow = Tables<'travelers'>
 
-interface CheckInWithProfile extends CheckInRow {
-  profiles?: ProfileRow | ProfileRow[] | null
+interface CheckInWithTraveler extends CheckInRow {
+  travelers?: TravelerRow | TravelerRow[] | null
 }
 
 export async function fetchCheckIns(): Promise<Ping[]> {
@@ -15,10 +15,10 @@ export async function fetchCheckIns(): Promise<Ping[]> {
   const { data, error } = (await supabase
     .from('check_ins')
     .select(
-      'id, lat, lng, note, user_id, created_at, profiles(username, avatar_url)'
+      'id, lat, lng, note, user_id, created_at, travelers(username, avatar_url)'
     )
     .order('created_at', { ascending: false })) as {
-    data: CheckInWithProfile[] | null
+    data: CheckInWithTraveler[] | null
     error: { message: string } | null
   }
 
@@ -29,15 +29,15 @@ export async function fetchCheckIns(): Promise<Ping[]> {
 
   if (!data) return []
 
-  const normalizeProfile = (
-    profiles: ProfileRow | ProfileRow[] | null | undefined
-  ): ProfileRow | null => {
-    if (!profiles) return null
-    return Array.isArray(profiles) ? profiles[0] ?? null : profiles
+  const normalizeTraveler = (
+    travelers: TravelerRow | TravelerRow[] | null | undefined
+  ): TravelerRow | null => {
+    if (!travelers) return null
+    return Array.isArray(travelers) ? travelers[0] ?? null : travelers
   }
 
   return data.map((checkIn) => {
-    const profile = normalizeProfile(checkIn.profiles)
+    const traveler = normalizeTraveler(checkIn.travelers)
 
     return {
       id: checkIn.id,
@@ -46,8 +46,8 @@ export async function fetchCheckIns(): Promise<Ping[]> {
       note: checkIn.note,
       createdAt: checkIn.created_at,
       userId: checkIn.user_id,
-      username: profile?.username ?? null,
-      avatarUrl: profile?.avatar_url ?? null,
+      username: traveler?.username ?? null,
+      avatarUrl: traveler?.avatar_url ?? null,
     }
   })
 }

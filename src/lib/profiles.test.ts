@@ -4,7 +4,7 @@ import { getProfileWithCheckIns } from './profiles'
 jest.mock('@/lib/supabase/server', () => ({
   createClient: jest.fn(async () => ({
     from: jest.fn((table: string) => {
-      if (table === 'profiles') {
+      if (table === 'travelers') {
         return {
           select: jest.fn(() => ({
             eq: jest.fn(() => ({

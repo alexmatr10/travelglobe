@@ -1,9 +1,9 @@
--- supabase/migrations/001_initial_schema.sql
---
--- NOTE: The shared Supabase project already owns a public.profiles table for a
--- different app, so TravelGlobe uses public.travelers for its user records.
+-- TravelGlobe schema applied to remote project eyjnqctyalifduxyibsv.
+-- NOTE: this project already owns a public.profiles table (petcare),
+-- so TravelGlobe uses public.travelers instead.
 
--- Users are handled by auth.users; extend with public traveler profile.
+begin;
+
 create table if not exists public.travelers (
   id uuid references auth.users on delete cascade primary key,
   username text unique not null,
@@ -14,7 +14,6 @@ create table if not exists public.travelers (
   updated_at timestamptz default now()
 );
 
--- Location check-ins (pings).
 create table if not exists public.check_ins (
   id uuid default gen_random_uuid() primary key,
   user_id uuid references public.travelers(id) on delete cascade not null,
@@ -25,32 +24,32 @@ create table if not exists public.check_ins (
   created_at timestamptz default now()
 );
 
--- Indexes for common reads.
 create index if not exists check_ins_user_id_idx on public.check_ins(user_id);
 create index if not exists check_ins_created_at_idx on public.check_ins(created_at desc);
 
--- Row Level Security (RLS).
 alter table public.travelers enable row level security;
 alter table public.check_ins enable row level security;
 
--- Travelers: readable by everyone, writable by owner.
+drop policy if exists "Travelers are viewable by everyone" on public.travelers;
 create policy "Travelers are viewable by everyone"
   on public.travelers for select using (true);
 
+drop policy if exists "Users can update own traveler profile" on public.travelers;
 create policy "Users can update own traveler profile"
   on public.travelers for update using (auth.uid() = id);
 
--- Check-ins: readable by everyone, writable by owner.
+drop policy if exists "Check-ins are viewable by everyone" on public.check_ins;
 create policy "Check-ins are viewable by everyone"
   on public.check_ins for select using (true);
 
+drop policy if exists "Users can insert own check-ins" on public.check_ins;
 create policy "Users can insert own check-ins"
   on public.check_ins for insert with check (auth.uid() = user_id);
 
+drop policy if exists "Users can delete own check-ins" on public.check_ins;
 create policy "Users can delete own check-ins"
   on public.check_ins for delete using (auth.uid() = user_id);
 
--- Trigger: create traveler record after user signs up.
 create or replace function public.handle_new_traveler()
 returns trigger as $$
 begin
@@ -64,6 +63,31 @@ begin
 end;
 $$ language plpgsql security definer;
 
-create or replace trigger on_auth_user_created
+drop trigger if exists on_auth_user_created on auth.users;
+create trigger on_auth_user_created
   after insert on auth.users
   for each row execute function public.handle_new_traveler();
+
+do $$
+begin
+  if not exists (select 1 from pg_publication where pubname = 'supabase_realtime') then
+    create publication supabase_realtime;
+  end if;
+end
+$$;
+
+do $$
+begin
+  if not exists (
+    select 1
+    from pg_publication_tables
+    where pubname = 'supabase_realtime'
+      and schemaname = 'public'
+      and tablename = 'check_ins'
+  ) then
+    alter publication supabase_realtime add table public.check_ins;
+  end if;
+end
+$$;
+
+commit;
