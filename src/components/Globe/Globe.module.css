@@ -5,14 +5,24 @@
   background: #0f172a;
 }
 
+/* The outer element's transform is owned by Mapbox (positioning) — never
+   set transform or animations on it, or the marker stops moving. All
+   visuals live on ::before/::after which animate independently. */
 .pingMarker {
+  position: relative;
   width: 20px;
   height: 20px;
   border-radius: 50%;
+  cursor: pointer;
+}
+
+.pingMarker::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
   background: radial-gradient(circle, #22d3ee 0%, #06b6d4 60%, transparent 70%);
   box-shadow: 0 0 12px #22d3ee, 0 0 24px #06b6d4;
-  cursor: pointer;
-  transform: translate(-50%, -50%);
   animation: pulse 2s ease-out infinite;
 }
 
@@ -28,11 +38,11 @@
 @keyframes pulse {
   0%,
   100% {
-    transform: translate(-50%, -50%) scale(1);
+    transform: scale(1);
     opacity: 1;
   }
   50% {
-    transform: translate(-50%, -50%) scale(1.2);
+    transform: scale(1.2);
     opacity: 0.85;
   }
 }
