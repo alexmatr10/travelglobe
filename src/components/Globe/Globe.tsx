@@ -39,6 +39,8 @@ export default function Globe({ pings = [], onMapClick }: GlobeProps) {
     })
 
     mapRef.current = map
+    // Debug/test handle for automated verification (harmless in prod)
+    ;(window as unknown as Record<string, unknown>).__tgMap = map
 
     map.on('style.load', () => {
       map.setFog({
