@@ -16,12 +16,50 @@ export interface GlobeProps {
   onMapClick?: (lat: number, lng: number) => void
 }
 
+type MarkerMap = Map<string | number, mapboxgl.Marker>
+
 mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN || ''
+
+// Diff pings against existing markers: create missing, remove stale.
+// IMPORTANT: must run only after the map has fired 'load' — Mapbox GL v3
+// globe projection hides markers added before the style is ready
+// (they never get positioned, even on later renders).
+function syncMarkers(pings: Ping[], map: mapboxgl.Map, markerMap: MarkerMap) {
+  const desiredIds = new Set<string | number>()
+  const keyedPings = pings.map((ping, index): [string | number, Ping] => {
+    const key = ping.id ?? `index-${index}`
+    desiredIds.add(key)
+    return [key, ping]
+  })
+
+  markerMap.forEach((marker, id) => {
+    if (!desiredIds.has(id)) {
+      marker.remove()
+      markerMap.delete(id)
+    }
+  })
+
+  keyedPings.forEach(([id, ping]) => {
+    if (markerMap.has(id)) return
+
+    const el = document.createElement('div')
+    el.className = styles.pingMarker
+    el.setAttribute('data-testid', 'ping-marker')
+
+    const marker = new mapboxgl.Marker({ element: el, anchor: 'center' })
+      .setLngLat([ping.lng, ping.lat])
+      .addTo(map)
+
+    markerMap.set(id, marker)
+  })
+}
 
 export default function Globe({ pings = [], onMapClick }: GlobeProps) {
   const mapContainer = useRef<HTMLDivElement | null>(null)
   const mapRef = useRef<mapboxgl.Map | null>(null)
-  const markerMapRef = useRef<Map<string | number, mapboxgl.Marker>>(new Map())
+  const markerMapRef = useRef<MarkerMap>(new Map())
+  const mapLoadedRef = useRef(false)
+  const pendingPingsRef = useRef<Ping[] | null>(null)
   const onMapClickRef = useRef(onMapClick)
 
   onMapClickRef.current = onMapClick
@@ -52,6 +90,13 @@ export default function Globe({ pings = [], onMapClick }: GlobeProps) {
       })
     })
 
+    map.on('load', () => {
+      mapLoadedRef.current = true
+      const pending = pendingPingsRef.current
+      pendingPingsRef.current = null
+      if (pending) syncMarkers(pending, map, markerMapRef.current)
+    })
+
     map.on('click', (event) => {
       const latestHandler = onMapClickRef.current
       if (!latestHandler) return
@@ -66,6 +111,7 @@ export default function Globe({ pings = [], onMapClick }: GlobeProps) {
       markerMap.clear()
       map.remove()
       mapRef.current = null
+      mapLoadedRef.current = false
     }
   }, [])
 
@@ -73,33 +119,14 @@ export default function Globe({ pings = [], onMapClick }: GlobeProps) {
     const map = mapRef.current
     if (!map) return
 
-    const desiredIds = new Set<string | number>()
-    const keyedPings = pings.map((ping, index): [string | number, Ping] => {
-      const key = ping.id ?? `index-${index}`
-      desiredIds.add(key)
-      return [key, ping]
-    })
+    if (!mapLoadedRef.current) {
+      // Pings arriving before the style is loaded (e.g. server-rendered on
+      // first paint) must wait — markers added pre-load stay hidden forever.
+      pendingPingsRef.current = pings
+      return
+    }
 
-    markerMapRef.current.forEach((marker, id) => {
-      if (!desiredIds.has(id)) {
-        marker.remove()
-        markerMapRef.current.delete(id)
-      }
-    })
-
-    keyedPings.forEach(([id, ping]) => {
-      if (markerMapRef.current.has(id)) return
-
-      const el = document.createElement('div')
-      el.className = styles.pingMarker
-      el.setAttribute('data-testid', 'ping-marker')
-
-      const marker = new mapboxgl.Marker({ element: el, anchor: 'center' })
-        .setLngLat([ping.lng, ping.lat])
-        .addTo(map)
-
-      markerMapRef.current.set(id, marker)
-    })
+    syncMarkers(pings, map, markerMapRef.current)
   }, [pings])
 
   return (

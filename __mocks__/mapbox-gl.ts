@@ -7,12 +7,17 @@ const markerMock = jest.fn().mockImplementation(() => ({
 }))
 
 class MapMock {
-  on = jest.fn().mockImplementation((event: string, handler: unknown) => {
+  on = jest.fn().mockImplementation(function (this: MapMock, event: string, handler: unknown) {
     if (event === 'style.load' && typeof handler === 'function') {
       handler({ target: this })
     }
+    // capture handlers so tests can fire lifecycle events (e.g. 'load')
+    this._handlers = this._handlers || {}
+    this._handlers[event] = this._handlers[event] || []
+    this._handlers[event].push(handler)
     return this
   })
+  _handlers: Record<string, unknown[]> = {}
   off = jest.fn().mockReturnThis()
   setFog = jest.fn().mockReturnThis()
   remove = jest.fn()
@@ -25,6 +30,11 @@ class MapMock {
     getNorthWest: () => ({ lng: -180, lat: 90 }),
     getSouthEast: () => ({ lng: 180, lat: -90 }),
   })
+  fire(event: string) {
+    ;(this._handlers[event] || []).forEach((handler) => {
+      if (typeof handler === 'function') handler({ target: this })
+    })
+  }
 }
 
 const mapboxglMock = {
