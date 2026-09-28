@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, FormEvent } from 'react'
+import { useState, useMemo, FormEvent } from 'react'
+import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 
 export default function AuthForm() {
@@ -10,8 +11,9 @@ export default function AuthForm() {
   const [username, setUsername] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  const router = useRouter()
 
-  const supabase = createClient()
+  const supabase = useMemo(() => createClient(), [])
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -27,6 +29,10 @@ export default function AuthForm() {
         })
         if (signUpError) {
           setError(signUpError.message)
+        } else {
+          // Email confirmation is disabled; a session is returned immediately.
+          router.push('/')
+          router.refresh()
         }
       } else {
         const { error: signInError } = await supabase.auth.signInWithPassword({
@@ -35,6 +41,9 @@ export default function AuthForm() {
         })
         if (signInError) {
           setError(signInError.message)
+        } else {
+          router.push('/')
+          router.refresh()
         }
       }
     } catch (err) {
